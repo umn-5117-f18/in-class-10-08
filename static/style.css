@@ -3,15 +3,10 @@ body #menu {
   border-bottom: 1px solid black;
 }
 
-@media only screen and (min-width: 600px) {
-  #search-box {
-    display: inline-block;
-    position: absolute;
-    top: 5px;
-    right: 30px;
-  }
-}
-
 #content {
   margin: 50px;
+}
+
+.img-and-caption {
+  max-width: 500px;
 }

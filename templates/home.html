@@ -1,33 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}home{% endblock %}
+{% block title %}file upload demo{% endblock %}
 
 {% block content %}
 
 <h1>file upload</h1>
 
-<form class="pure-form" action="/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="file">
-    <!-- <input type="submit" value="Upload"> -->
-    <button type="submit" class="pure-button pure-button-primary">Upload!</button>
+<form class="pure-form pure-form-stacked"
+      action="/upload" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".png, .jpg, .jpeg">
+  <button type="submit" class="pure-button pure-button-primary">Upload!</button>
 </form>
 
 <h1>images</h1>
 
+{% if not images %}
+  <p>no images</p>
+{% endif %}
+
 {% for i in images %}
-  <p>
-    {{ i.filename }}
-    <img src="/img/{{ i.img_id }}" style="max-width: 200px;">
-  </p>
-{% endfor %}
+  <div class="img-and-caption">
+    <div class="img-container">
+      <img src="/img/{{ i.img_id }}" class="pure-img">
+    </div>
+    <p class="img-caption">
+      <a href="{{ url_for('serve_img', img_id=i.img_id) }}">{{ i.filename }}</a>
+    </p>
+  </div>
 
-
-<h1>movies</h1>
-
-{% for m in movies %}
-  <p>
-    <a href="{{ url_for('movie', movie_id=m.movie_id) }}">{{ m.title }} ({{ m.release_year }})</a>
-  </p>
 {% endfor %}
 
 {% endblock %}

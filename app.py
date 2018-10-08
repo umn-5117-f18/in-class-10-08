@@ -1,14 +1,15 @@
 import io
 import os
 
-from flask import Flask, abort, jsonify, redirect, render_template, request, \
-    send_file, url_for
+from flask import Flask, abort, flash, jsonify, redirect, render_template, \
+    request, send_file, url_for
 import psycopg2
 from werkzeug.utils import secure_filename
 
 import db
 
 app = Flask(__name__)
+app.secret_key = "a_secret_key"
 
 @app.before_first_request
 def initialize():
@@ -21,13 +22,9 @@ def page_not_found(error):
 @app.route('/')
 def home():
     with db.get_db_cursor() as cur:
-        cur.execute("SELECT * FROM images")
+        cur.execute("SELECT img_id, filename FROM images order by img_id desc")
         images = [record for record in cur]
-
-    with db.get_db_cursor() as cur:
-        cur.execute("SELECT * FROM movie")
-        movies = [record for record in cur]
-    return render_template("home.html", movies=movies, images=images)
+    return render_template("home.html", images=images)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -35,32 +32,24 @@ def allowed_file(filename):
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    # check if the post request has the file part
     if 'file' not in request.files:
-        app.logger.warn("no file part")
-        # flash('No file part')
+        flash("no file part")
         return redirect(request.url)
     file = request.files['file']
-    # if user does not select file, browser also
-    # submit an empty part without filename
     if file.filename == '':
-        # flash('No selected file')
-        app.logger.warn("no selected file")
+        flash("no selected file")
         return redirect(request.url)
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
 
-        app.logger.info(f"ready to save file {filename}")
+        # convert the flask object to a regular file object
         data = request.files['file'].read()
 
         with db.get_db_cursor(commit=True) as cur:
+            # we are storing the original filename for demo purposes
+            # might be useful to also/instead save the file extension or mime type
             cur.execute("insert into images (filename, img) values (%s, %s)",
                 (filename, data))
-
-        #
-        # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        # return redirect(url_for('uploaded_file',
-        #                         filename=filename))
     return redirect(url_for("home"))
 
 
@@ -70,46 +59,12 @@ def serve_img(img_id):
         cur.execute("SELECT * FROM images where img_id=%s", (img_id,))
         image_row = cur.fetchone()
 
-        app.logger.info(f"image {image_row['img_id']}")
-        app.logger.info(f"image {image_row['img']} ")
+        # in memory binary stream
+        stream = io.BytesIO(image_row["img"])
 
-        # memoryview
-        return send_file(io.BytesIO(image_row["img"]),
-                     attachment_filename=image_row["filename"],
-                     mimetype='image/jpeg')
-
-
-@app.route('/movies/<movie_id>')
-def movie(movie_id):
-    with db.get_db_cursor() as cur:
-        cur.execute("SELECT * FROM movie where movie_id=%s", (movie_id,))
-        movie = cur.fetchone()
-
-    if not movie:
-        return abort(404)
-
-    return render_template("movie.html", movie=movie)
-
-@app.route('/genres/<genre>')
-def genre(genre):
-    with db.get_db_cursor() as cur:
-        cur.execute("SELECT * FROM movie where genre=%s", (genre,))
-        movies = [record for record in cur]
-    return render_template("home.html", movies=movies)
-
-@app.route('/search')
-def search():
-    query = request.args.get('query')
-    if not query:
-        # TODO flash
-        redirect('home')
-
-    with db.get_db_cursor() as cur:
-        # XXX: hack for query wildcard characters w/ correct escaping
-        query_wildcard = f"%{query}%"
-        cur.execute("SELECT * FROM movie where title ilike (%s)", (query_wildcard,))
-        movies = [record for record in cur]
-    return render_template("home.html", movies=movies)
+        return send_file(
+            stream,
+            attachment_filename=image_row["filename"])
 
 
 if __name__ == '__main__':
