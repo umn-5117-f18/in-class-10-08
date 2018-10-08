@@ -2,17 +2,12 @@
 
 starting point: <https://github.com/umn-5117-f18/in-class-10-01>
 
-docs:
-
-*
-
-
 heroku setup:
 
 ```
 heroku create
 heroku addons:create heroku-postgresql:hobby-dev
-# use `heroku pg:psql` and run `schema.sql`
+# use `heroku pg:psql` and run `\i 'schema.sql'`
 git push heroku master
 heroku open
 ```
@@ -33,6 +28,5 @@ heroku commands:
 
 ```
 heroku logs --tail
-heroku pg
 heroku pg:psql
 ```
