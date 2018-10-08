@@ -1,6 +1,8 @@
+import io
 import os
 
-from flask import Flask, abort, jsonify, redirect, render_template, request, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, request, \
+    send_file, url_for
 import psycopg2
 from werkzeug.utils import secure_filename
 
@@ -18,11 +20,14 @@ def page_not_found(error):
 
 @app.route('/')
 def home():
-    app.logger.info("home")
+    with db.get_db_cursor() as cur:
+        cur.execute("SELECT * FROM images")
+        images = [record for record in cur]
+
     with db.get_db_cursor() as cur:
         cur.execute("SELECT * FROM movie")
         movies = [record for record in cur]
-    return render_template("home.html", movies=movies)
+    return render_template("home.html", movies=movies, images=images)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -57,6 +62,21 @@ def upload():
         # return redirect(url_for('uploaded_file',
         #                         filename=filename))
     return redirect(url_for("home"))
+
+
+@app.route('/img/<int:img_id>')
+def serve_img(img_id):
+    with db.get_db_cursor() as cur:
+        cur.execute("SELECT * FROM images where img_id=%s", (img_id,))
+        image_row = cur.fetchone()
+
+        app.logger.info(f"image {image_row['img_id']}")
+        app.logger.info(f"image {image_row['img']} ")
+
+        # memoryview
+        return send_file(io.BytesIO(image_row["img"]),
+                     attachment_filename=image_row["filename"],
+                     mimetype='image/jpeg')
 
 
 @app.route('/movies/<movie_id>')

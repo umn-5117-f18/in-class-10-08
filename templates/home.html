@@ -12,6 +12,15 @@
     <button type="submit" class="pure-button pure-button-primary">Upload!</button>
 </form>
 
+<h1>images</h1>
+
+{% for i in images %}
+  <p>
+    {{ i.filename }}
+    <img src="/img/{{ i.img_id }}" style="max-width: 200px;">
+  </p>
+{% endfor %}
+
 
 <h1>movies</h1>
 
