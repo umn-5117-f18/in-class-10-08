@@ -4,6 +4,15 @@
 
 {% block content %}
 
+<h1>file upload</h1>
+
+<form class="pure-form" action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file">
+    <!-- <input type="submit" value="Upload"> -->
+    <button type="submit" class="pure-button pure-button-primary">Upload!</button>
+</form>
+
+
 <h1>movies</h1>
 
 {% for m in movies %}

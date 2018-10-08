@@ -1,6 +1,4 @@
-# in-class-10-01
-
-starting point: <https://github.com/umn-5117-f18/in-class-10-01>
+# in-class-10-08
 
 heroku setup:
 

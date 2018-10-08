@@ -2,6 +2,7 @@ import os
 
 from flask import Flask, abort, jsonify, redirect, render_template, request, url_for
 import psycopg2
+from werkzeug.utils import secure_filename
 
 import db
 
@@ -17,10 +18,40 @@ def page_not_found(error):
 
 @app.route('/')
 def home():
+    app.logger.info("home")
     with db.get_db_cursor() as cur:
         cur.execute("SELECT * FROM movie")
         movies = [record for record in cur]
     return render_template("home.html", movies=movies)
+
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ['png', 'jpg']
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        app.logger.warn("no file part")
+        # flash('No file part')
+        return redirect(request.url)
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file.filename == '':
+        # flash('No selected file')
+        app.logger.warn("no selected file")
+        return redirect(request.url)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+
+        app.logger.info(f"ready to save file {filename}")
+        #
+        # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # return redirect(url_for('uploaded_file',
+        #                         filename=filename))
+    return redirect(url_for("home"))
+
 
 @app.route('/movies/<movie_id>')
 def movie(movie_id):
