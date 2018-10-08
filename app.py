@@ -46,6 +46,12 @@ def upload():
         filename = secure_filename(file.filename)
 
         app.logger.info(f"ready to save file {filename}")
+        data = request.files['file'].read()
+
+        with db.get_db_cursor(commit=True) as cur:
+            cur.execute("insert into images (filename, img) values (%s, %s)",
+                (filename, data))
+
         #
         # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         # return redirect(url_for('uploaded_file',
